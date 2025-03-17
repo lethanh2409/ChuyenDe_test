@@ -76,7 +76,7 @@ public class OrderPageTest {
             WebElement quantityDisplay = driver.findElement(By.xpath("//span[contains(@class, 'px-6') and text()='1']"));
             assertEquals("1", quantityDisplay.getText());
 
-            WebElement increaseButton = driver.findElement(By.xpath("//button[contains(text(), '+')]"));
+            WebElement increaseButton = driver.findElement(By.xpath("//*[@id=\"root\"]/div/div/div[1]/div[1]/div[1]/div/div[2]/button[2]"));
             increaseButton.click();
             wait.until(ExpectedConditions.textToBePresentInElementLocated(By.xpath("//span[contains(@class, 'px-6')]"), "2"));
 
@@ -93,7 +93,7 @@ public class OrderPageTest {
         driver.get("http://localhost:3000/order");
 
         try {
-            WebElement orderButton = driver.findElement(By.xpath("//button[contains(text(), 'Đặt hàng')]"));
+            WebElement orderButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"root\"]/div/div/div[2]/div/button")));
             orderButton.click();
             wait.until(ExpectedConditions.urlContains("/order-success"));
             assertTrue(driver.getCurrentUrl().contains("/order-success"));
