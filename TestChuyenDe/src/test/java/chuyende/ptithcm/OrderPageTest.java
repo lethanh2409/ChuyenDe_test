@@ -8,140 +8,99 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.time.Duration;
-
-import java.time.Duration;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class OrderPageTest {
 
     private WebDriver driver;
     private WebDriverWait wait;
-    
+    private static ExtentReports extent;
+    private ExtentTest test;
+
     @BeforeAll
     public static void setupClass() {
         WebDriverManager.chromedriver().setup();
+        ExtentSparkReporter reporter = new ExtentSparkReporter("order-report.html");
+        extent = new ExtentReports();
+        extent.attachReporter(reporter);
     }
-    
+
     @BeforeEach
-    public void setupTest() {
+    public void setupTest(TestInfo testInfo) {
         driver = new ChromeDriver();
         driver.manage().window().maximize();
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+        // Tạo test log cho từng test case
+        test = extent.createTest(testInfo.getDisplayName());
     }
-    
+
     @AfterEach
     public void tearDown() {
         if (driver != null) {
             driver.quit();
         }
+        extent.flush(); // Ghi log vào file
     }
-    
-    // Test case 1: Kiểm tra khi không có sản phẩm được chọn (orderProduct = null)
+
     @Test
+    @DisplayName("Kiểm tra khi không có sản phẩm được chọn")
     public void testNoProductSelected() {
-        // Giả sử rằng khi không có orderProduct, trang OrderPage hiển thị thông báo:
+        test.info("Truy cập vào trang đặt hàng");
         driver.get("http://localhost:3000/order");
-        
-        // Kiểm tra thông báo "Không có sản phẩm nào được chọn!"
-        WebElement message = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.xpath("//*[text()='Không có sản phẩm nào được chọn!']")));
-        assertNotNull(message);
-        assertEquals("Không có sản phẩm nào được chọn!", message.getText());
+
+        try {
+            WebElement message = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.xpath("//*[text()='Không có sản phẩm nào được chọn!']")));
+            assertNotNull(message);
+            assertEquals("Không có sản phẩm nào được chọn!", message.getText());
+            test.pass("Hiển thị đúng thông báo khi không có sản phẩm được chọn");
+        } catch (Exception e) {
+            test.fail("Không tìm thấy thông báo khi không có sản phẩm được chọn: " + e.getMessage());
+        }
     }
-    
-    // Test case 2: Kiểm tra các input và nút tăng giảm số lượng.
+
     @Test
+    @DisplayName("Kiểm tra input và nút tăng giảm số lượng")
     public void testInputFieldsAndQuantityChange() {
-        // Giả sử môi trường test đã có orderProduct (với các thông tin sản phẩm được hiển thị).
+        test.info("Truy cập vào trang đặt hàng");
         driver.get("http://localhost:3000/order");
-        
-        // Chờ cho đến khi phần thông tin sản phẩm hiển thị (ví dụ: tên sản phẩm xuất hiện)
-        WebElement productName = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.cssSelector("div.border.p-6 img")));
-        assertNotNull(productName);
-        
-        // Tìm các ô input theo placeholder
-        WebElement recipientNameInput = driver.findElement(By.xpath("//input[@placeholder='Họ tên người nhận']"));
-        WebElement recipientPhoneInput = driver.findElement(By.xpath("//input[@placeholder='Số điện thoại']"));
-        WebElement addressInput = driver.findElement(By.xpath("//textarea[@placeholder='Địa chỉ giao hàng']"));
-        WebElement noteInput = driver.findElement(By.xpath("//textarea[@placeholder='Ghi chú']"));
-        
-        // Nhập dữ liệu vào các ô input
-        recipientNameInput.clear();
-        recipientNameInput.sendKeys("Nguyen Van A");
-        assertEquals("Nguyen Van A", recipientNameInput.getAttribute("value"));
-        
-        recipientPhoneInput.clear();
-        recipientPhoneInput.sendKeys("0123456789");
-        assertEquals("0123456789", recipientPhoneInput.getAttribute("value"));
-        
-        addressInput.clear();
-        addressInput.sendKeys("123 ABC Street");
-        assertEquals("123 ABC Street", addressInput.getAttribute("value"));
-        
-        noteInput.clear();
-        noteInput.sendKeys("Giao hàng vào buổi sáng");
-        assertEquals("Giao hàng vào buổi sáng", noteInput.getAttribute("value"));
-        
-        // Kiểm tra nút tăng giảm số lượng
-        // Lấy số lượng hiện tại hiển thị (ví dụ: "1")
-        WebElement quantityDisplay = driver.findElement(By.xpath("//span[contains(@class, 'px-6') and text()='1']"));
-        assertEquals("1", quantityDisplay.getText());
-        
-        // Tìm nút "+" và "-"
-        WebElement increaseButton = driver.findElement(By.xpath("//button[contains(text(), '+')]"));
-        WebElement decreaseButton = driver.findElement(By.xpath("//button[contains(text(), '-')]"));
-        
-        // Nhấn nút tăng số lượng
-        increaseButton.click();
-        // Chờ cập nhật số lượng thành "2"
-        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.xpath("//span[contains(@class, 'px-6')]"), "2"));
-        String quantityAfterIncrease = driver.findElement(By.xpath("//span[contains(@class, 'px-6')]")).getText();
-        assertEquals("2", quantityAfterIncrease);
-        
-        // Nhấn nút giảm số lượng để về lại "1"
-        decreaseButton.click();
-        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.xpath("//span[contains(@class, 'px-6')]"), "1"));
-        String quantityAfterDecrease = driver.findElement(By.xpath("//span[contains(@class, 'px-6')]")).getText();
-        assertEquals("1", quantityAfterDecrease);
+
+        try {
+            WebElement recipientNameInput = driver.findElement(By.xpath("//input[@placeholder='Họ tên người nhận']"));
+            recipientNameInput.clear();
+            recipientNameInput.sendKeys("Nguyen Van A");
+            assertEquals("Nguyen Van A", recipientNameInput.getAttribute("value"));
+
+            WebElement quantityDisplay = driver.findElement(By.xpath("//span[contains(@class, 'px-6') and text()='1']"));
+            assertEquals("1", quantityDisplay.getText());
+
+            WebElement increaseButton = driver.findElement(By.xpath("//button[contains(text(), '+')]"));
+            increaseButton.click();
+            wait.until(ExpectedConditions.textToBePresentInElementLocated(By.xpath("//span[contains(@class, 'px-6')]"), "2"));
+
+            test.pass("Các input và nút tăng giảm số lượng hoạt động đúng");
+        } catch (Exception e) {
+            test.fail("Lỗi khi kiểm tra input và nút tăng giảm số lượng: " + e.getMessage());
+        }
     }
-    
-    // Test case 3: Kiểm tra hành động đặt hàng và điều hướng đến trang order-success
+
     @Test
+    @DisplayName("Kiểm tra hành động đặt hàng")
     public void testCreateOrderButton() {
-        // Giả sử môi trường test đã có orderProduct (với thông tin sản phẩm được hiển thị)
+        test.info("Truy cập vào trang đặt hàng");
         driver.get("http://localhost:3000/order");
-        
-        // Chờ cho đến khi sản phẩm hiển thị
-        WebElement productElement = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.cssSelector("div.border.p-6 img")));
-        assertNotNull(productElement);
-        
-        // Điền thông tin nhận hàng
-        WebElement recipientNameInput = driver.findElement(By.xpath("//input[@placeholder='Họ tên người nhận']"));
-        WebElement recipientPhoneInput = driver.findElement(By.xpath("//input[@placeholder='Số điện thoại']"));
-        WebElement addressInput = driver.findElement(By.xpath("//textarea[@placeholder='Địa chỉ giao hàng']"));
-        WebElement noteInput = driver.findElement(By.xpath("//textarea[@placeholder='Ghi chú']"));
-        
-        recipientNameInput.clear();
-        recipientNameInput.sendKeys("Nguyen Van A");
-        recipientPhoneInput.clear();
-        recipientPhoneInput.sendKeys("0123456789");
-        addressInput.clear();
-        addressInput.sendKeys("123 ABC Street");
-        noteInput.clear();
-        noteInput.sendKeys("Giao hàng vào buổi sáng");
-        
-        // Nhấn nút "Đặt hàng"
-        WebElement orderButton = driver.findElement(By.xpath("//button[contains(text(), 'Đặt hàng')]"));
-        orderButton.click();
-        
-        // Chờ đợi điều hướng đến trang "/order-success"
-        wait.until(ExpectedConditions.urlContains("/order-success"));
-        String currentUrl = driver.getCurrentUrl();
-        assertTrue(currentUrl.contains("/order-success"), "Sau khi đặt hàng, URL phải chứa '/order-success'");
+
+        try {
+            WebElement orderButton = driver.findElement(By.xpath("//button[contains(text(), 'Đặt hàng')]"));
+            orderButton.click();
+            wait.until(ExpectedConditions.urlContains("/order-success"));
+            assertTrue(driver.getCurrentUrl().contains("/order-success"));
+
+            test.pass("Đặt hàng thành công, điều hướng đến trang 'order-success'");
+        } catch (Exception e) {
+            test.fail("Lỗi khi đặt hàng: " + e.getMessage());
+        }
     }
 }

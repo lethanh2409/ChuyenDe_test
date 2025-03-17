@@ -8,8 +8,6 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import java.time.Duration;
 
 import java.time.Duration;
 import java.util.List;
@@ -20,66 +18,92 @@ public class WatchShopTest {
 
     private WebDriver driver;
     private WebDriverWait wait;
+    private static ExtentReports extent;
+    private ExtentTest test;
 
     @BeforeAll
     public static void setupClass() {
         WebDriverManager.chromedriver().setup();
+
+        // Khởi tạo ExtentReports
+        ExtentSparkReporter spark = new ExtentSparkReporter("watchshop-report.html");
+        extent = new ExtentReports();
+        extent.attachReporter(spark);
     }
 
     @BeforeEach
     public void setupTest() {
         driver = new ChromeDriver();
         driver.manage().window().maximize();
-        // Thiết lập wait với timeout 10 giây
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
     @AfterEach
-    public void teardown() {
+    public void teardown(TestInfo testInfo) {
         if (driver != null) {
             driver.quit();
         }
+
+        // Lưu kết quả vào báo cáo
+        extent.flush();
     }
 
-    // Test case 1: Kiểm tra trang danh sách sản phẩm hiển thị danh sách sản phẩm đúng cách
+    // Test case 1: Kiểm tra danh sách sản phẩm hiển thị đúng
     @Test
     public void testProductListDisplayed() {
-        driver.get("http://localhost:3000/");
+        test = extent.createTest("Test Danh Sách Sản Phẩm");
+        driver.get("http://localhost:3000/home");
 
-        // Chờ cho đến khi container chứa danh sách sản phẩm được hiển thị
         WebElement productGrid = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.grid.grid-cols-4")));
-        // Tìm tất cả các sản phẩm (giả sử mỗi sản phẩm nằm trong thẻ có class "p-4")
         List<WebElement> products = productGrid.findElements(By.cssSelector("div.p-4"));
+
         assertFalse(products.isEmpty(), "Danh sách sản phẩm không được rỗng");
+        test.pass("Danh sách sản phẩm được hiển thị thành công");
     }
 
-    // Test case 2: Kiểm tra chuyển hướng khi nhấn vào 1 sản phẩm (trang chi tiết sản phẩm)
     @Test
     public void testProductDetailNavigation() {
-        driver.get("http://localhost:3000/");
+        test = extent.createTest("Test Chuyển Hướng Trang Chi Tiết");
 
-        // Tìm liên kết của sản phẩm đầu tiên và click vào đó
-        WebElement firstProductLink = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("div.p-4 a")));
-        firstProductLink.click();
+        // Mở trang Home
+        driver.get("http://localhost:3000/home");
 
-        // Chờ cho đến khi URL chứa "/product/"
-        wait.until(ExpectedConditions.urlContains("/product/"));
+        // Chờ danh sách sản phẩm hiển thị
+        WebElement productList = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id='root']/div/div/div/div[1]")));
+
+        // Tìm tất cả sản phẩm trong danh sách
+        List<WebElement> products = productList.findElements(By.cssSelector("div.p-4 a"));
+        assertFalse(products.isEmpty(), "Không tìm thấy sản phẩm nào trong danh sách.");
+
+        // Click vào sản phẩm đầu tiên
+        WebElement firstProduct = products.get(0);
+        firstProduct.click();
+
+        // Chờ URL thay đổi thành đúng format: "http://localhost:3000/product/{product_id}"
+        wait.until(ExpectedConditions.urlMatches("http://localhost:3000/product/[A-Za-z0-9]+$"));
+
+        // Kiểm tra URL hợp lệ
         String currentUrl = driver.getCurrentUrl();
-        assertTrue(currentUrl.contains("/product/"), "URL phải chứa '/product/' để xác nhận chuyển sang trang chi tiết");
+        assertTrue(currentUrl.matches("http://localhost:3000/product/[A-Za-z0-9]+$"), "URL không hợp lệ: " + currentUrl);
+
+        test.pass("Chuyển hướng từ trang Home đến trang chi tiết sản phẩm thành công.");
     }
 
-    // Test case 3: Kiểm tra hành động nhấn nút "Mua ngay" chuyển hướng đến trang đặt hàng
+
+
+    // Test case 3: Kiểm tra nút "Mua ngay" chuyển hướng đến trang đặt hàng
     @Test
     public void testBuyNowButtonNavigation() {
-        driver.get("http://localhost:3000/");
+        test = extent.createTest("Test Nút 'Mua ngay'");
+        driver.get("http://localhost:3000/product/DH00000001");
 
-        // Tìm nút "Mua ngay" của sản phẩm đầu tiên và click vào nó
-        WebElement buyNowButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(), 'Mua ngay')]")));
+        WebElement buyNowButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"root\"]/div/div/div[2]/div/button")));
         buyNowButton.click();
 
-        // Chờ cho đến khi URL chứa "/order"
         wait.until(ExpectedConditions.urlContains("/order"));
         String currentUrl = driver.getCurrentUrl();
-        assertTrue(currentUrl.contains("/order"), "URL phải chứa '/order' sau khi nhấn nút 'Mua ngay'");
+        assertTrue(currentUrl.contains("/order"), "URL phải chứa '/order'");
+
+        test.pass("Nút 'Mua ngay' hoạt động chính xác");
     }
 }

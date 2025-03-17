@@ -8,8 +8,6 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import java.time.Duration;
 
 import java.time.Duration;
 
@@ -19,19 +17,27 @@ public class ProductDetailTest {
 
     private WebDriver driver;
     private WebDriverWait wait;
+    private static ExtentReports extent;
+    private ExtentTest test;
 
     @BeforeAll
     public static void setupClass() {
-        // Tự động setup ChromeDriver bằng WebDriverManager
         WebDriverManager.chromedriver().setup();
+
+        // Khởi tạo báo cáo
+        ExtentSparkReporter sparkReporter = new ExtentSparkReporter("product-report.html");
+        extent = new ExtentReports();
+        extent.attachReporter(sparkReporter);
     }
 
     @BeforeEach
-    public void setupTest() {
+    public void setupTest(TestInfo testInfo) {
         driver = new ChromeDriver();
         driver.manage().window().maximize();
-        // Thiết lập explicit wait với timeout 10 giây
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+        // Tạo test trong báo cáo
+        test = extent.createTest(testInfo.getDisplayName());
     }
 
     @AfterEach
@@ -41,52 +47,67 @@ public class ProductDetailTest {
         }
     }
 
-    // Test case 1: Kiểm tra trang chi tiết sản phẩm hiển thị đúng thông tin
-    @Test
-    public void testProductDetailDisplaysCorrectInfo() {
-        // Giả sử có sản phẩm với productId = 1
-        driver.get("http://localhost:3000/product/1");
-
-        // Chờ đến khi tên sản phẩm được hiển thị
-        WebElement productName = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.xpath("//h1[contains(@class, 'text-3xl') and contains(@class, 'font-bold')]")));
-        assertNotNull(productName, "Tên sản phẩm không được null");
-        String nameText = productName.getText();
-        assertFalse(nameText.isEmpty(), "Tên sản phẩm không được rỗng");
-
-        // Kiểm tra giá sản phẩm (với giả định phần giá có chứa "đ")
-        WebElement productPrice = driver.findElement(By.xpath("//p[contains(@class, 'text-xl') and contains(@class, 'font-semibold')]"));
-        assertNotNull(productPrice, "Giá sản phẩm không được null");
-        String priceText = productPrice.getText();
-        assertTrue(priceText.contains("đ"), "Giá sản phẩm phải có ký hiệu 'đ'");
-
-        // Kiểm tra mô tả sản phẩm (giả sử có thẻ chứa mô tả không thuộc nhóm tiêu đề hay giá)
-        WebElement productDescription = driver.findElement(By.xpath("//p[not(contains(@class, 'text-xl')) and not(contains(@class, 'font-bold'))]"));
-        assertNotNull(productDescription, "Mô tả sản phẩm không được null");
-        String descriptionText = productDescription.getText();
-        assertFalse(descriptionText.isEmpty(), "Mô tả sản phẩm không được rỗng");
-
-        // Kiểm tra sự tồn tại của nút "Mua ngay"
-        WebElement buyNowButton = driver.findElement(By.xpath("//button[contains(text(), 'Mua ngay')]"));
-        assertNotNull(buyNowButton, "Nút 'Mua ngay' phải tồn tại");
+    @AfterAll
+    public static void tearDownClass() {
+        extent.flush(); // Lưu báo cáo
     }
 
-    // Test case 2: Kiểm tra hành động nhấn nút "Mua ngay" chuyển hướng đến trang đặt hàng
     @Test
+    @DisplayName("Kiểm tra trang chi tiết sản phẩm hiển thị đúng thông tin")
+    public void testProductDetailDisplaysCorrectInfo() {
+        try {
+            driver.get("http://localhost:3000/product/DH00000002");
+            test.info("Truy cập trang sản phẩm");
+
+            WebElement productName = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.xpath("//*[@id=\"root\"]/div/div/div[2]/h2")));
+            assertNotNull(productName, "Tên sản phẩm không được null");
+            assertFalse(productName.getText().isEmpty(), "Tên sản phẩm không được rỗng");
+            test.pass("Tên sản phẩm hiển thị đúng");
+
+            WebElement productPrice = driver.findElement(By.xpath("//*[@id=\"root\"]/div/div/div[2]/div/p[2]"));
+            assertNotNull(productPrice, "Giá sản phẩm không được null");
+            assertTrue(productPrice.getText().contains("đ"), "Giá sản phẩm phải có ký hiệu 'đ'");
+            test.pass("Giá sản phẩm hiển thị đúng");
+
+            WebElement productDescription = driver.findElement(By.xpath("//p[not(contains(@class, 'text-xl')) and not(contains(@class, 'font-bold'))]"));
+            assertNotNull(productDescription, "Mô tả sản phẩm không được null");
+            assertFalse(productDescription.getText().isEmpty(), "Mô tả sản phẩm không được rỗng");
+            test.pass("Mô tả sản phẩm hiển thị đúng");
+
+            WebElement buyNowButton = driver.findElement(By.xpath("//*[@id=\"root\"]/div/div/div[2]/div/button"));
+            assertNotNull(buyNowButton, "Nút 'Mua ngay' phải tồn tại");
+            test.pass("Nút 'Mua ngay' hiển thị đúng");
+
+        } catch (Exception e) {
+            test.fail("Lỗi: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    @Test
+    @DisplayName("Kiểm tra nút 'Mua ngay' chuyển hướng đến trang đặt hàng")
     public void testBuyNowButtonNavigatesToOrderPage() {
-        driver.get("http://localhost:3000/product/1");
+        try {
+            driver.get("http://localhost:3000/product/DH00000002");
+            test.info("Truy cập trang sản phẩm");
 
-        // Chờ và tìm nút "Mua ngay"
-        WebElement buyNowButton = wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//button[contains(text(), 'Mua ngay')]")));
-        assertNotNull(buyNowButton, "Nút 'Mua ngay' không được null");
+            WebElement buyNowButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"root\"]/div/div/div[2]/div/button")));
 
-        // Click vào nút "Mua ngay"
-        buyNowButton.click();
+            assertNotNull(buyNowButton, "Nút 'Mua ngay' không được null");
+            test.pass("Nút 'Mua ngay' tìm thấy");
 
-        // Chờ cho URL chuyển hướng có chứa "/order"
-        wait.until(ExpectedConditions.urlContains("/order"));
-        String currentUrl = driver.getCurrentUrl();
-        assertTrue(currentUrl.contains("/order"), "Sau khi click 'Mua ngay', URL phải chứa '/order'");
+            buyNowButton.click();
+            test.info("Đã click nút 'Mua ngay'");
+
+            wait.until(ExpectedConditions.urlContains("/order"));
+            String currentUrl = driver.getCurrentUrl();
+            assertTrue(currentUrl.contains("/order"), "Sau khi click 'Mua ngay', URL phải chứa '/order'");
+            test.pass("Chuyển hướng đúng đến trang đặt hàng");
+
+        } catch (Exception e) {
+            test.fail("Lỗi: " + e.getMessage());
+            throw e;
+        }
     }
 }
