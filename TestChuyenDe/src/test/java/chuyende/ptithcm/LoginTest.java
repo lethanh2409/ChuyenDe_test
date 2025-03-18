@@ -35,7 +35,7 @@ public class LoginTest {
     @Test
     void testUsernameBlank() {
         test = extent.createTest("Test Username Blank", "Kiểm tra khi username để trống");
-        driver.get("http://localhost:3000/");
+        driver.get("http://localhost:3000/login");
 
         WebElement passwordInput = driver.findElement(By.name("user_password"));
         WebElement loginButton = driver.findElement(By.name("submit"));
@@ -62,7 +62,7 @@ public class LoginTest {
     @Test
     void testUsernameAndPasswordBlank() {
         test = extent.createTest("Test Username and password Blank", "Kiểm tra khi username và password để trống");
-        driver.get("http://localhost:3000/");
+        driver.get("http://localhost:3000/login");
 
         WebElement passwordInput = driver.findElement(By.name("user_password"));
         WebElement loginButton = driver.findElement(By.name("submit"));
@@ -88,7 +88,7 @@ public class LoginTest {
     @Test
     void testPasswordBlank() {
         test = extent.createTest("Test Password Blank", "Kiểm tra khi password để trống");
-        driver.get("http://localhost:3000/");
+        driver.get("http://localhost:3000/login");
 
         WebElement usernameInput = driver.findElement(By.name("user_login"));
         WebElement loginButton = driver.findElement(By.name("submit"));
@@ -115,7 +115,7 @@ public class LoginTest {
     @Test
     void testInvalidUsername() {
         test = extent.createTest("Test Invalid Username", "Kiểm tra username sai");
-        driver.get("http://localhost:3000/");
+        driver.get("http://localhost:3000/login");
 
         WebElement usernameInput = driver.findElement(By.name("user_login"));
         WebElement passwordInput = driver.findElement(By.name("user_password"));
@@ -144,7 +144,7 @@ public class LoginTest {
     @Test
     void testInvalidPassword() {
         test = extent.createTest("Test Invalid Password", "Kiểm tra password sai");
-        driver.get("http://localhost:3000/");
+        driver.get("http://localhost:3000/login");
 
         WebElement usernameInput = driver.findElement(By.name("user_login"));
         WebElement passwordInput = driver.findElement(By.name("user_password"));
@@ -173,14 +173,14 @@ public class LoginTest {
     @Test
     void testValidLogin() {
         test = extent.createTest("Test Valid Login", "Kiểm tra đăng nhập thành công");
-        driver.get("http://localhost:3000/");
+        driver.get("http://localhost:3000/login");
 
         WebElement usernameInput = driver.findElement(By.name("user_login"));
         WebElement passwordInput = driver.findElement(By.name("user_password"));
         WebElement loginButton = driver.findElement(By.name("submit"));
 
         usernameInput.sendKeys("admin");
-        passwordInput.sendKeys("password123");
+        passwordInput.sendKeys("admin");
         loginButton.click();
 
         wait.until(ExpectedConditions.urlToBe("http://localhost:3000/home"));

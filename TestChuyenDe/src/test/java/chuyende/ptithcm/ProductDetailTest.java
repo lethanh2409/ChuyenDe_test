@@ -56,7 +56,7 @@ public class ProductDetailTest {
     @DisplayName("Kiểm tra trang chi tiết sản phẩm hiển thị đúng thông tin")
     public void testProductDetailDisplaysCorrectInfo() {
         try {
-            driver.get("http://localhost:3000/product/DH00000002");
+            driver.get("http://localhost:3000/product/P001");
             test.info("Truy cập trang sản phẩm");
 
             WebElement productName = wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -85,29 +85,5 @@ public class ProductDetailTest {
         }
     }
 
-    @Test
-    @DisplayName("Kiểm tra nút 'Mua ngay' chuyển hướng đến trang đặt hàng")
-    public void testBuyNowButtonNavigatesToOrderPage() {
-        try {
-            driver.get("http://localhost:3000/product/DH00000002");
-            test.info("Truy cập trang sản phẩm");
 
-            WebElement buyNowButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"root\"]/div/div/div[2]/div/button")));
-
-            assertNotNull(buyNowButton, "Nút 'Mua ngay' không được null");
-            test.pass("Nút 'Mua ngay' tìm thấy");
-
-            buyNowButton.click();
-            test.info("Đã click nút 'Mua ngay'");
-
-            wait.until(ExpectedConditions.urlContains("/order"));
-            String currentUrl = driver.getCurrentUrl();
-            assertTrue(currentUrl.contains("/order"), "Sau khi click 'Mua ngay', URL phải chứa '/order'");
-            test.pass("Chuyển hướng đúng đến trang đặt hàng");
-
-        } catch (Exception e) {
-            test.fail("Lỗi: " + e.getMessage());
-            throw e;
-        }
-    }
 }

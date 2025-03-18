@@ -95,9 +95,21 @@ public class WatchShopTest {
     @Test
     public void testBuyNowButtonNavigation() {
         test = extent.createTest("Test Nút 'Mua ngay'");
-        driver.get("http://localhost:3000/product/DH00000001");
+        driver.get("http://localhost:3000/login");
 
-        WebElement buyNowButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"root\"]/div/div/div[2]/div/button")));
+        WebElement usernameInput = driver.findElement(By.name("user_login"));
+        WebElement passwordInput = driver.findElement(By.name("user_password"));
+        WebElement loginButton = driver.findElement(By.name("submit"));
+
+        usernameInput.sendKeys("admin");
+        passwordInput.sendKeys("admin");
+        loginButton.click();
+
+        wait.until(ExpectedConditions.urlToBe("http://localhost:3000/home"));
+        String actualUrl = driver.getCurrentUrl();
+        String expectedUrl = "http://localhost:3000/home";
+
+        WebElement buyNowButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"root\"]/div/div/div/div[1]/div")));
         buyNowButton.click();
 
         wait.until(ExpectedConditions.urlContains("/order"));
